@@ -23,7 +23,6 @@ def test_cannot_add_question_without_section(questionnaire: Questionnaire, quest
         pytest.fail("Expected subclass of ValueError, but no exception was raised")
     except Exception as e:
         assert issubclass(type(e), ValueError)
-
     
 
 def test_questionnaire_can_add_question(questionnaire: Questionnaire, add_section_1, add_question_1_1):
@@ -56,6 +55,27 @@ def test_answered_question_updates_value(questionnaire: Questionnaire, add_secti
         question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
     )
     assert question.value == "Yes"
+
+def test_cannot_set_answer_when_not_option(questionnaire: Questionnaire, add_section_1, add_question_1_1, section_1, question_1_1):
+    try:
+        questionnaire.set_answer(
+            question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
+            value="Not an option",
+        )
+        pytest.fail("Expected subclass of ValueError, but no exception was raised")
+    except Exception as e:
+        assert issubclass(type(e), Exception)
+
+def test_set_answer_with_options_is_case_insensitive(questionnaire: Questionnaire, add_section_1, add_question_1_1, section_1, question_1_1):
+    questionnaire.set_answer(
+        question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
+        value="YES",
+    )
+    question = questionnaire.get(
+        question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
+    )
+    assert question.value == "Yes"
+
 
 def test_questionnaire_added_question_details_are_correct(questionnaire: Questionnaire, add_section_1, add_question_1_1, question_1_1):
     section = next(section for section in questionnaire.sections if section.section_id == question_1_1["section_id"])

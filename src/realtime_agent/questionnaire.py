@@ -50,6 +50,7 @@ class QuestionnaireQuestion:
     skippable: bool = True
     value: Any | None = None
     skipped: bool = False
+    _option_lookup: dict[str, str] = field(init=False, default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
         for field_name, value in (
@@ -72,11 +73,18 @@ class QuestionnaireQuestion:
                 raise TypeError("question_options must be a sequence of strings")
             options_iterable = list(options)
 
+        option_lookup: dict[str, str] = {}
         for option in options_iterable:
             if not isinstance(option, str):
                 raise TypeError("question_options must only contain strings")
             if not option:
                 raise ValueError("question_options must contain non-empty strings")
+            lowered = option.casefold()
+            if lowered in option_lookup:
+                raise ValueError(
+                    "question_options must not contain duplicate values ignoring case"
+                )
+            option_lookup[lowered] = option
 
         if not isinstance(self.skippable, bool):
             raise TypeError("skippable must be a boolean")
@@ -86,9 +94,21 @@ class QuestionnaireQuestion:
             raise ValueError("Non-skippable questions cannot be initialised as skipped")
 
         object.__setattr__(self, "question_options", list(options_iterable))
+        object.__setattr__(self, "_option_lookup", option_lookup)
 
     def set_value(self, value: Any) -> None:
-        object.__setattr__(self, "value", value)
+        canonical_value = value
+        if self.question_options:
+            if isinstance(value, str):
+                matched_option = self._option_lookup.get(value.casefold())
+                if matched_option is not None:
+                    canonical_value = matched_option
+            if canonical_value not in self.question_options:
+                raise ValueError(
+                    f"Value for question '{self.question_id}' must be one of "
+                    f"{', '.join(repr(option) for option in self.question_options)}"
+                )
+        object.__setattr__(self, "value", canonical_value)
         object.__setattr__(self, "skipped", False)
 
     def clear_value(self) -> None:

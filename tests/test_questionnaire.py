@@ -87,6 +87,23 @@ def test_questionnaire_question_validation_and_ops():
         non_skippable.skip()
 
 
+def test_questionnaire_question_options_are_case_insensitive():
+    question = QuestionnaireQuestion(
+        question_id="intro.choice",
+        question_text="Choose one",
+        question_options=("Yes", "No"),
+    )
+
+    question.set_value("YES")
+    assert question.value == "Yes"
+
+    question.set_value("no")
+    assert question.value == "No"
+
+    with pytest.raises(ValueError):
+        question.set_value("maybe")
+
+
 def test_questionnaire_section_condition_and_completion():
     section = QuestionnaireSection(
         section_id="details",
