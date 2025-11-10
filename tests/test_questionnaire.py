@@ -104,6 +104,62 @@ def test_questionnaire_question_options_are_case_insensitive():
         question.set_value("maybe")
 
 
+def test_questionnaire_spelling_sensitive_enforces_character_sequence():
+    question = QuestionnaireQuestion(
+        question_id="contact.email",
+        question_text="Please provide the caller's email address",
+        spelling_sensitive=True,
+    )
+
+    question.set_value(list("test@example.com"))
+    assert question.value == "test@example.com"
+
+    with pytest.raises(ValueError):
+        question.set_value("test@example.com")
+
+    with pytest.raises(ValueError):
+        question.set_value(["te"])  # type: ignore[list-item]
+
+    with pytest.raises(TypeError):
+        question.set_value([1, 2, 3])  # type: ignore[list-item]
+
+
+def test_questionnaire_add_question_respects_spelling_sensitive_flag():
+    questionnaire = Questionnaire()
+    questionnaire.add_section(section_id="contact", section_name="Contact")
+
+    question = questionnaire.add_question(
+        section_id="contact",
+        question_id="email",
+        question_text="What is the caller's email address?",
+        question_type="text",
+        spelling_sensitive=True,
+    )
+
+    assert question.spelling_sensitive is True
+
+    with pytest.raises(ValueError):
+        questionnaire.set_answer(question_id="contact.email", value="test@example.com")
+
+    questionnaire.set_answer(
+        question_id="contact.email",
+        value=list("test@example.com"),
+    )
+    stored = questionnaire.get(question_id="contact.email")
+    assert stored.value == "test@example.com"
+
+    other = questionnaire.add_question(
+        section_id="contact",
+        question_id="phone",
+        question_text="What is the caller's phone number?",
+        question_type="text",
+    )
+
+    assert other.spelling_sensitive is False
+    questionnaire.set_answer(question_id="contact.phone", value="0123456789")
+    assert questionnaire.get(question_id="contact.phone").value == "0123456789"
+
+
 def test_questionnaire_section_condition_and_completion():
     section = QuestionnaireSection(
         section_id="details",

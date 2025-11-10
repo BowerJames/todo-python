@@ -46,6 +46,20 @@ def test_can_answer_question(questionnaire: Questionnaire, add_section_1, add_qu
         value="Yes",
     )
 
+def test_can_overwrite_answer(questionnaire: Questionnaire, add_section_1, add_question_1_1, section_1, question_1_1):
+    questionnaire.set_answer(
+        question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
+        value="Yes",
+    )
+    questionnaire.set_answer(
+        question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
+        value="No",
+    )
+    question = questionnaire.get(
+        question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
+    )
+    assert question.value == "No"
+
 def test_answered_question_updates_value(questionnaire: Questionnaire, add_section_1, add_question_1_1, section_1, question_1_1):
     questionnaire.set_answer(
         question_id=".".join([section_1["section_id"], question_1_1["question_id"]]),
@@ -101,8 +115,64 @@ def test_visible_sections_are_visible(questionnaire: Questionnaire, add_section_
     assert only_visible_section.section_name == section_1["section_name"]
     assert only_visible_section.section_description == section_1["section_description"]
 
+def test_section_2_becomes_visible_when_section_1_is_completed(questionnaire: Questionnaire, add_section_1_with_questions, add_section_2_with_questions, section_1, section_2):
+    section_1 = next(section for section in questionnaire.sections if section.section_id == section_1["section_id"])
+    for question in section_1.questions:
+        questionnaire.set_answer(
+            question_id=".".join([section_1.section_id, question.question_id]),
+            value="Yes",
+        )
+    
+    visible_sections = questionnaire.get_visible_sections()
+    assert len(visible_sections) == 2
+    assert section_2["section_id"] in [section.section_id for section in visible_sections]
 
+def test_spelling_sensitive_questions_accepts_list_of_chars(questionnaire: Questionnaire, add_section_1_with_questions, add_section_2_with_questions, section_1, section_2, question_2_3):
+    section_1_section = next(section for section in questionnaire.sections if section.section_id == section_1["section_id"])
+    for question in section_1_section.questions:
+        questionnaire.set_answer(
+            question_id=".".join([section_1_section.section_id, question.question_id]),
+            value="Yes",
+        )
+    questionnaire.set_answer(
+        question_id=".".join([section_2["section_id"], question_2_3["question_id"]]),
+        value=[
+            'j',
+            'a',
+            'm',
+            'e',
+            's',
+            '@',
+            't',
+            'e',
+            's',
+            't',
+            '.',
+            'c',
+            'o',
+            'm',
+        ],
+    )
+    question = questionnaire.get(
+        question_id=".".join([section_2["section_id"], question_2_3["question_id"]]),
+    )
+    assert question.value == "james@test.com"
 
+def test_spelling_sensitive_requires_list_of_chars(questionnaire: Questionnaire, add_section_1_with_questions, add_section_2_with_questions, section_1, section_2, question_2_3):
+    section_1_section = next(section for section in questionnaire.sections if section.section_id == section_1["section_id"])
+    for question in section_1_section.questions:
+        questionnaire.set_answer(
+            question_id=".".join([section_1_section.section_id, question.question_id]),
+            value="Yes",
+        )
+    try:
+        questionnaire.set_answer(
+            question_id=".".join([section_2["section_id"], question_2_3["question_id"]]),
+            value="james@test.com",
+        )
+        pytest.fail("Expected subclass of ValueError, but no exception was raised")
+    except Exception as e:
+        assert issubclass(type(e), Exception)
 
 
 

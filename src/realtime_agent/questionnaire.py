@@ -48,6 +48,7 @@ class QuestionnaireQuestion:
     question_type: str = "text"
     question_options: Sequence[str] | None = field(default_factory=tuple)
     skippable: bool = True
+    spelling_sensitive: bool = False
     value: Any | None = None
     skipped: bool = False
     _option_lookup: dict[str, str] = field(init=False, default_factory=dict, repr=False)
@@ -88,6 +89,8 @@ class QuestionnaireQuestion:
 
         if not isinstance(self.skippable, bool):
             raise TypeError("skippable must be a boolean")
+        if not isinstance(self.spelling_sensitive, bool):
+            raise TypeError("spelling_sensitive must be a boolean")
         if not isinstance(self.skipped, bool):
             raise TypeError("skipped must be a boolean")
         if self.skipped and not self.skippable:
@@ -97,17 +100,19 @@ class QuestionnaireQuestion:
         object.__setattr__(self, "_option_lookup", option_lookup)
 
     def set_value(self, value: Any) -> None:
-        canonical_value = value
+        canonical_value = self._normalise_value(value)
         if self.question_options:
-            if isinstance(value, str):
-                matched_option = self._option_lookup.get(value.casefold())
+            candidate = canonical_value
+            if isinstance(candidate, str):
+                matched_option = self._option_lookup.get(candidate.casefold())
                 if matched_option is not None:
-                    canonical_value = matched_option
-            if canonical_value not in self.question_options:
+                    candidate = matched_option
+            if candidate not in self.question_options:
                 raise ValueError(
                     f"Value for question '{self.question_id}' must be one of "
                     f"{', '.join(repr(option) for option in self.question_options)}"
                 )
+            canonical_value = candidate
         object.__setattr__(self, "value", canonical_value)
         object.__setattr__(self, "skipped", False)
 
@@ -131,9 +136,33 @@ class QuestionnaireQuestion:
             "question_type": self.question_type,
             "question_options": list(self.question_options),
             "skippable": self.skippable,
+            "spelling_sensitive": self.spelling_sensitive,
             "value": self.value,
             "skipped": self.skipped,
         }
+
+    def _normalise_value(self, value: Any) -> Any:
+        if not self.spelling_sensitive:
+            return value
+        return self._normalise_spelling_sensitive_value(value)
+
+    def _normalise_spelling_sensitive_value(self, value: Any) -> str:
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            characters: list[str] = []
+            for index, char in enumerate(value):
+                if not isinstance(char, str):
+                    raise TypeError(
+                        "Spelling sensitive questions require characters provided as strings"
+                    )
+                if len(char) != 1:
+                    raise ValueError(
+                        "Each entry for a spelling sensitive question must be a single character"
+                    )
+                characters.append(char)
+            return "".join(characters)
+        raise ValueError(
+            "Spelling sensitive questions require a sequence of single-character strings"
+        )
 
 
 @dataclass(slots=True)
@@ -290,15 +319,19 @@ class Questionnaire:
         question_type: str = "text",
         question_options: Sequence[str] | None = None,
         skippable: bool = True,
+        spelling_sensitive: bool = False,
     ) -> QuestionnaireQuestion:
         section = self._get_section_by_id(section_id)
         options = question_options if question_options is not None else ()
+        if not isinstance(spelling_sensitive, bool):
+            raise TypeError("spelling_sensitive must be a boolean")
         question = QuestionnaireQuestion(
             question_id=question_id,
             question_text=question_text,
             question_type=question_type,
             question_options=options,
             skippable=skippable,
+            spelling_sensitive=spelling_sensitive,
         )
         section.add_question(question)
         return question
@@ -479,7 +512,6 @@ class Questionnaire:
             return value
 
         raise ValueError(f"Unsupported condition operator '{operator}'")
-
 
 def _normalise_condition(condition: Mapping[str, Any]) -> Mapping[str, Any]:
     normalised = deepcopy(condition)

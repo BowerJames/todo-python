@@ -96,6 +96,7 @@ def question_2_3():
         "question_text": "What is the caller's email address?",
         "question_type": "text",
         "skippable": False,
+        "spelling_sensitive": True,
     }
 
 @pytest.fixture
@@ -106,6 +107,7 @@ def question_2_4():
         "question_text": "What is the caller's phone number?",
         "question_type": "text",
         "skippable": False,
+        "spelling_sensitive": True,
     }
 
 # Section 1
