@@ -32,7 +32,7 @@ from typing import (
 
 from jinja2 import Template, TemplateError
 
-from realtime.services import openai
+from realtime_agent.services import openai
 from .scaffolding import AgentScaffolding, create_scaffolding
 
 __all__ = [
@@ -541,7 +541,13 @@ class Session:
         if self._llm_config is None:
             self._prepare_transport_config()
 
-        port = await openai.connect()
+        connector_factory = getattr(openai, "get_connector", None)
+        if callable(connector_factory):
+            connector = connector_factory()
+        else:
+            connector = openai.connect
+
+        port = await connector()
         if not isinstance(port, WebSocketPort):
             raise SessionError("OpenAI connector returned an invalid websocket port")
 

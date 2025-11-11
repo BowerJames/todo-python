@@ -110,8 +110,6 @@ def question_2_4():
         "spelling_sensitive": True,
     }
 
-# Section 1
-
 @pytest.fixture
 def add_section_1(questionnaire: Questionnaire, section_1):
     questionnaire.add_section(

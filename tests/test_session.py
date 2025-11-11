@@ -182,7 +182,7 @@ async def test_initialize_sends_questionnaire(monkeypatch: pytest.MonkeyPatch) -
     async def fake_connect(**_: object) -> _StubWebSocket:
         return openai_websocket
 
-    monkeypatch.setattr("realtime.services.openai.connect", fake_connect)
+    monkeypatch.setattr("realtime_agent.services.openai.connect", fake_connect)
 
     config = {
         "llm": {"model": "gpt-realtime"},

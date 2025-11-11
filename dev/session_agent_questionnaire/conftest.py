@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 import pytest_asyncio
 from realtime_agent import Session
-import realtime.services.openai as openai
+import realtime_agent.services.openai as openai
 import uuid
 
 from dev.websocket_port import MyTestWebSocketPort

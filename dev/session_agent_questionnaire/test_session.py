@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from jinja2 import Template
 from realtime_agent import Session
 from realtime_agent import WebSocketPort
-import realtime.services.openai as openai
+import realtime_agent.services.openai as openai
 import uuid
 
 from dev.websocket_port import MyTestWebSocketPort
