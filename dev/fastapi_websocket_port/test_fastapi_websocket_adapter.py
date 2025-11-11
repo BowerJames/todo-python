@@ -60,3 +60,28 @@ def test_fastapi_websocket_port_websocket(app):
             "foo": "bar",
             "lorem": "ipsum"
         }
+
+def test_fastapi_websocket_port_websocket_looped(looped_app):
+    client = TestClient(looped_app)
+    message = {
+        "foo": "bar"
+    }
+    with client.websocket_connect("/ws") as websocket:
+        websocket.send_json(message)
+        received_message = websocket.receive_json()
+        assert received_message == {
+            "foo": "bar",
+            "lorem": "ipsum"
+        }
+
+        websocket.send_json(
+            {
+                "foo": "baz"
+            }
+        )
+        received_message = websocket.receive_json()
+        assert received_message == {
+            "foo": "baz",
+            "lorem": "ipsum"
+        }
+        websocket.close()

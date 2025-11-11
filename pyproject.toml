@@ -10,8 +10,9 @@ license = { text = "MIT" }
 authors = [{ name = "James Bower", email = "james.bower@xanda.net" }]
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
-    "fastapi",
+    "fastapi[all]",
     "jinja2",
+    "websockets",
 ]
 
 [dependency-groups]
@@ -19,6 +20,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-asyncio",
+    "pytest-timeout",
     "httpx"
 ]
 

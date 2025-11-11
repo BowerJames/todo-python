@@ -65,6 +65,24 @@ class FastApiWebSocketPort(WebSocketPort):
             # Assume acceptance succeeded when the state is not explicitly reported.
             self._accepted = True
 
+    def __aiter__(self) -> "FastApiWebSocketPort":
+        """Return the port itself as an asynchronous iterator."""
+
+        return self
+
+    async def __anext__(self) -> Any:
+        """Yield the next incoming message until the websocket closes."""
+
+        try:
+            return await self.receive()
+        except WebSocketDisconnect as exc:
+            # A graceful close from the client results in Starlette raising
+            # ``WebSocketDisconnect``. Convert it to ``StopAsyncIteration`` so
+            # ``async for`` loops terminate naturally.
+            if getattr(exc, "code", 1000) == 1000:
+                raise StopAsyncIteration from None
+            raise StopAsyncIteration from exc
+
     async def send(self, message: Any) -> None:
         """Serialise and forward a message to the client."""
 

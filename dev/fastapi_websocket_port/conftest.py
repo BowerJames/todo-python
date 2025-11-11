@@ -23,3 +23,19 @@ def app():
         await fast_api_websocket_port.send(message)
         await fast_api_websocket_port.close()
     return app
+
+@pytest.fixture
+def looped_app():
+    app = FastAPI()
+    @app.websocket("/ws")
+    async def websocket(websocket: WebSocket):
+        fast_api_websocket_port = FastApiWebSocketPort(websocket)
+        await fast_api_websocket_port.accept()
+        async for message in fast_api_websocket_port:
+            await fast_api_websocket_port.send(
+                {
+                    "lorem": "ipsum",
+                    **message,
+                }
+            )
+    return app
