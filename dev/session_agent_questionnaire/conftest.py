@@ -15,6 +15,16 @@ def initial_message_template():
     return "Say 'Hello, this is {{state.agent_name}} from {{state.branch_name}}, how can I help you today?'"
 
 @pytest.fixture
+def system_prompt_template():
+    return (
+        "You are a helpful assistant called {{state.agent_name}} from {{state.branch_name}}.\n\n"
+    )
+
+@pytest.fixture
+def model():
+    return "gpt-realtime"
+
+@pytest.fixture
 def questionnaire():
     return Mock()
 
@@ -23,16 +33,19 @@ def rendered_questionnaire():
     return "RENDERED_QUESTIONNAIRE"
 
 @pytest.fixture
-def llm_config() -> dict:
+def llm_config(model) -> dict:
     return {
-        "model": "gpt-realtime"
+        "model": model
     }
+
+@pytest.fixture
+def agent_kwargs():
+    return {}
 
 @pytest.fixture
 def agent_config() -> dict:
     return {
-        "type": "questionnaire",
-        "kwargs": {}
+        "type": "questionnaire"
     }
 
 @pytest.fixture

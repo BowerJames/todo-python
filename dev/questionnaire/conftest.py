@@ -17,7 +17,6 @@ def section_1():
 @pytest.fixture
 def question_1_1():
     return {
-        "section_id": "1",
         "question_id": "1",
         "question_text": "Is the caller calling to book a viewing (Yes/No)?",
         "question_type": "text",
@@ -26,9 +25,18 @@ def question_1_1():
     }
 
 @pytest.fixture
+def question_1_1_kwargs(
+    section_1,
+    question_1_1,
+):
+    return {
+        "section_id": section_1["section_id"],
+        **question_1_1,
+    }
+
+@pytest.fixture
 def question_1_2():
     return {
-        "section_id": "1",
         "question_id": "2",
         "question_text": "Is the caller calling to book a valuation (Yes/No)?",
         "question_type": "text",
@@ -37,15 +45,52 @@ def question_1_2():
     }
 
 @pytest.fixture
+def question_1_2_kwargs(
+    section_1,
+    question_1_2,
+):
+    return {
+        "section_id": section_1["section_id"],
+        **question_1_2,
+    }
+
+@pytest.fixture
 def question_1_3():
     return {
-        "section_id": "1",
         "question_id": "3",
         "question_text": "Is the caller calling to ask for mortgage advice (Yes/No)?",
         "question_type": "text",
         "question_options": ["Yes", "No"],
         "skippable": False,
     }
+
+@pytest.fixture
+def question_1_3_kwargs(
+    section_1,
+    question_1_3,
+):
+    return {
+        "section_id": section_1["section_id"],
+        **question_1_3,
+    }
+
+@pytest.fixture
+def section_1_config(
+    section_1,
+    question_1_1,
+    question_1_2,
+    question_1_3,
+):
+    return {
+        **section_1,
+        "questions": [
+            question_1_1,
+            question_1_2,
+            question_1_3,
+        ],
+    }
+
+
 
 @pytest.fixture
 def section_2():
@@ -71,7 +116,6 @@ def section_2():
 @pytest.fixture
 def question_2_1():
     return {
-        "section_id": "2",
         "question_id": "1",
         "question_text": "What is the caller's first name?",
         "question_type": "text",
@@ -79,9 +123,18 @@ def question_2_1():
     }
 
 @pytest.fixture
+def question_2_1_kwargs(
+    section_2,
+    question_2_1,
+):
+    return {
+        "section_id": section_2["section_id"],
+        **question_2_1,
+    }
+
+@pytest.fixture
 def question_2_2():
     return {
-        "section_id": "2",
         "question_id": "2",
         "question_text": "What is the caller's last name?",
         "question_type": "text",
@@ -89,25 +142,71 @@ def question_2_2():
     }
 
 @pytest.fixture
+def question_2_2_kwargs(
+    section_2,
+    question_2_2,
+):
+    return {
+        "section_id": section_2["section_id"],
+        **question_2_2,
+    }
+
+@pytest.fixture
 def question_2_3():
     return {
-        "section_id": "2",
         "question_id": "3",
         "question_text": "What is the caller's email address?",
         "question_type": "text",
         "skippable": False,
         "spelling_sensitive": True,
     }
+    
+@pytest.fixture
+def question_2_3_kwargs(
+    section_2,
+    question_2_3,
+):
+    return {
+        "section_id": section_2["section_id"],
+        **question_2_3,
+    }
 
 @pytest.fixture
 def question_2_4():
     return {
-        "section_id": "2",
         "question_id": "4",
         "question_text": "What is the caller's phone number?",
         "question_type": "text",
         "skippable": False,
         "spelling_sensitive": True,
+    }
+
+@pytest.fixture
+def question_2_4_kwargs(
+    section_2,
+    question_2_4,
+):
+    return {
+        "section_id": section_2["section_id"],
+        **question_2_4,
+    }
+
+@pytest.fixture
+def section_2_config(
+    section_2,
+    question_2_1,
+    question_2_2,
+    question_2_3,
+    question_2_4,
+):
+    return {
+        **section_2,
+        "questions": [
+            question_2_1,
+            question_2_2,
+            question_2_3,
+            question_2_4,
+        ],
     }
 
 @pytest.fixture
@@ -177,3 +276,4 @@ def add_section_2_with_questions(
     add_question_2_3,
 ):
     pass
+
