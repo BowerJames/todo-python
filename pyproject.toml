@@ -13,6 +13,7 @@ dependencies = [
     "fastapi[all]",
     "jinja2",
     "websockets",
+    "python-dotenv",
 ]
 
 [dependency-groups]
@@ -21,7 +22,8 @@ dev = [
     "pytest-cov",
     "pytest-asyncio",
     "pytest-timeout",
-    "httpx"
+    "httpx",
+    "ipykernel"
 ]
 
 [tool.pytest.ini_options]
