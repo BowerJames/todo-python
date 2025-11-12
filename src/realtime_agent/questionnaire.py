@@ -96,7 +96,11 @@ class QuestionnaireQuestion:
         if self.skipped and not self.skippable:
             raise ValueError("Non-skippable questions cannot be initialised as skipped")
 
-        object.__setattr__(self, "question_options", list(options_iterable))
+        # Preserve None if it was None, otherwise convert to list
+        if options is None:
+            object.__setattr__(self, "question_options", None)
+        else:
+            object.__setattr__(self, "question_options", list(options_iterable))
         object.__setattr__(self, "_option_lookup", option_lookup)
 
     def set_value(self, value: Any) -> None:
@@ -134,7 +138,7 @@ class QuestionnaireQuestion:
             "question_id": self.question_id,
             "question_text": self.question_text,
             "question_type": self.question_type,
-            "question_options": list(self.question_options),
+            "question_options": list(self.question_options) if self.question_options is not None else None,
             "skippable": self.skippable,
             "spelling_sensitive": self.spelling_sensitive,
             "value": self.value,
@@ -285,6 +289,95 @@ class Questionnaire:
         if not isinstance(self.fallback_prompt, str):
             raise TypeError("Questionnaire fallback_prompt must be a string")
 
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> Questionnaire:
+        """Build a Questionnaire from a configuration dictionary.
+
+        Parameters
+        ----------
+        config:
+            Configuration dictionary with a "sections" key containing a list of
+            section configurations. Each section configuration should have:
+            - section_id: str
+            - section_name: str
+            - section_description: str | None
+            - condition: Mapping[str, Any] | None
+            - questions: list[Mapping[str, Any]]
+                Each question should have:
+                - question_id: str
+                - question_text: str
+                - question_type: str (default: "text")
+                - question_options: Sequence[str] | None (default: None)
+                - skippable: bool (default: True)
+                - spelling_sensitive: bool (default: False)
+
+        Returns
+        -------
+        Questionnaire:
+            A new Questionnaire instance built from the configuration.
+        """
+        if not isinstance(config, Mapping):
+            raise TypeError("config must be a mapping")
+        
+        sections_config = config.get("sections")
+        if not isinstance(sections_config, Sequence) or isinstance(sections_config, (str, bytes)):
+            raise TypeError("config must have a 'sections' key with a sequence of section configurations")
+        
+        questionnaire = cls()
+        
+        for section_config in sections_config:
+            if not isinstance(section_config, Mapping):
+                raise TypeError("Each section in config must be a mapping")
+            
+            section_id = section_config.get("section_id")
+            section_name = section_config.get("section_name")
+            section_description = section_config.get("section_description")
+            condition = section_config.get("condition")
+            questions_config = section_config.get("questions", [])
+            
+            if not isinstance(section_id, str):
+                raise TypeError("section_id must be a string")
+            if not isinstance(section_name, str):
+                raise TypeError("section_name must be a string")
+            
+            questionnaire.add_section(
+                section_id=section_id,
+                section_name=section_name,
+                section_description=section_description,
+                condition=condition,
+            )
+            
+            if not isinstance(questions_config, Sequence) or isinstance(questions_config, (str, bytes)):
+                raise TypeError("questions must be a sequence of question configurations")
+            
+            for question_config in questions_config:
+                if not isinstance(question_config, Mapping):
+                    raise TypeError("Each question in config must be a mapping")
+                
+                question_id = question_config.get("question_id")
+                question_text = question_config.get("question_text")
+                question_type = question_config.get("question_type", "text")
+                question_options = question_config.get("question_options", None)
+                skippable = question_config.get("skippable", True)
+                spelling_sensitive = question_config.get("spelling_sensitive", False)
+                
+                if not isinstance(question_id, str):
+                    raise TypeError("question_id must be a string")
+                if not isinstance(question_text, str):
+                    raise TypeError("question_text must be a string")
+                
+                questionnaire.add_question(
+                    section_id=section_id,
+                    question_id=question_id,
+                    question_text=question_text,
+                    question_type=question_type,
+                    question_options=question_options,
+                    skippable=skippable,
+                    spelling_sensitive=spelling_sensitive,
+                )
+        
+        return questionnaire
+
     @property
     def sections(self) -> tuple[QuestionnaireSection, ...]:
         return tuple(self._sections)
@@ -322,14 +415,13 @@ class Questionnaire:
         spelling_sensitive: bool = False,
     ) -> QuestionnaireQuestion:
         section = self._get_section_by_id(section_id)
-        options = question_options if question_options is not None else ()
         if not isinstance(spelling_sensitive, bool):
             raise TypeError("spelling_sensitive must be a boolean")
         question = QuestionnaireQuestion(
             question_id=question_id,
             question_text=question_text,
             question_type=question_type,
-            question_options=options,
+            question_options=question_options,
             skippable=skippable,
             spelling_sensitive=spelling_sensitive,
         )

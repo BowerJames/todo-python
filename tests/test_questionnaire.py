@@ -378,3 +378,197 @@ def test_normalise_condition_rewrites_and_validates():
     with pytest.raises(ValueError):
         _normalise_condition({"operator": "VISIBLE", "section_id": ""})
 
+
+def test_questionnaire_from_config_builds_complete_questionnaire():
+    config = {
+        "sections": [
+            {
+                "section_id": "intro",
+                "section_name": "Introduction",
+                "section_description": "Please answer these questions",
+                "questions": [
+                    {
+                        "question_id": "name",
+                        "question_text": "What is your name?",
+                        "question_type": "text",
+                        "question_options": ["Alice", "Bob"],
+                        "skippable": False,
+                        "spelling_sensitive": False,
+                    },
+                    {
+                        "question_id": "age",
+                        "question_text": "What is your age?",
+                        "question_type": "text",
+                        "skippable": True,
+                    },
+                ],
+            },
+            {
+                "section_id": "details",
+                "section_name": "Details",
+                "section_description": "More information",
+                "condition": {"operator": "COMPLETED", "section_id": "intro"},
+                "questions": [
+                    {
+                        "question_id": "email",
+                        "question_text": "What is your email?",
+                        "question_type": "text",
+                        "spelling_sensitive": True,
+                    },
+                ],
+            },
+        ],
+    }
+
+    questionnaire = Questionnaire.from_config(config)
+
+    assert len(questionnaire.sections) == 2
+
+    intro_section = questionnaire.sections[0]
+    assert intro_section.section_id == "intro"
+    assert intro_section.section_name == "Introduction"
+    assert intro_section.section_description == "Please answer these questions"
+    assert intro_section.condition is None
+    assert len(intro_section.questions) == 2
+
+    name_question = intro_section.questions[0]
+    assert name_question.question_id == "name"
+    assert name_question.question_text == "What is your name?"
+    assert name_question.question_type == "text"
+    assert name_question.question_options == ["Alice", "Bob"]
+    assert name_question.skippable is False
+    assert name_question.spelling_sensitive is False
+
+    age_question = intro_section.questions[1]
+    assert age_question.question_id == "age"
+    assert age_question.question_text == "What is your age?"
+    assert age_question.question_type == "text"
+    assert age_question.question_options is None
+    assert age_question.skippable is True
+    assert age_question.spelling_sensitive is False
+
+    details_section = questionnaire.sections[1]
+    assert details_section.section_id == "details"
+    assert details_section.section_name == "Details"
+    assert details_section.section_description == "More information"
+    assert details_section.condition == {"operator": "COMPLETED", "section_id": "intro"}
+    assert len(details_section.questions) == 1
+
+    email_question = details_section.questions[0]
+    assert email_question.question_id == "email"
+    assert email_question.question_text == "What is your email?"
+    assert email_question.question_type == "text"
+    assert email_question.question_options is None
+    assert email_question.skippable is True
+    assert email_question.spelling_sensitive is True
+
+
+def test_questionnaire_from_config_rejects_invalid_config_type():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config("not a dict")  # type: ignore[arg-type]
+
+
+def test_questionnaire_from_config_requires_sections_key():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config({})
+
+
+def test_questionnaire_from_config_requires_sections_to_be_sequence():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config({"sections": "not a sequence"})  # type: ignore[dict-item]
+
+
+def test_questionnaire_from_config_requires_section_to_be_mapping():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config({"sections": ["not a dict"]})
+
+
+def test_questionnaire_from_config_requires_section_id():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config({"sections": [{"section_name": "Test"}]})
+
+
+def test_questionnaire_from_config_requires_section_name():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config({"sections": [{"section_id": "test"}]})
+
+
+def test_questionnaire_from_config_requires_questions_to_be_sequence():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config(
+            {
+                "sections": [
+                    {
+                        "section_id": "test",
+                        "section_name": "Test",
+                        "questions": "not a sequence",  # type: ignore[dict-item]
+                    }
+                ]
+            }
+        )
+
+
+def test_questionnaire_from_config_requires_question_to_be_mapping():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config(
+            {
+                "sections": [
+                    {
+                        "section_id": "test",
+                        "section_name": "Test",
+                        "questions": ["not a dict"],
+                    }
+                ]
+            }
+        )
+
+
+def test_questionnaire_from_config_requires_question_id():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config(
+            {
+                "sections": [
+                    {
+                        "section_id": "test",
+                        "section_name": "Test",
+                        "questions": [{"question_text": "Test?"}],
+                    }
+                ]
+            }
+        )
+
+
+def test_questionnaire_from_config_requires_question_text():
+    with pytest.raises(TypeError):
+        Questionnaire.from_config(
+            {
+                "sections": [
+                    {
+                        "section_id": "test",
+                        "section_name": "Test",
+                        "questions": [{"question_id": "q1"}],
+                    }
+                ]
+            }
+        )
+
+
+def test_questionnaire_from_config_handles_empty_sections():
+    config = {"sections": []}
+    questionnaire = Questionnaire.from_config(config)
+    assert len(questionnaire.sections) == 0
+
+
+def test_questionnaire_from_config_handles_section_without_questions():
+    config = {
+        "sections": [
+            {
+                "section_id": "test",
+                "section_name": "Test",
+            }
+        ]
+    }
+    questionnaire = Questionnaire.from_config(config)
+    assert len(questionnaire.sections) == 1
+    assert len(questionnaire.sections[0].questions) == 0
+

@@ -210,27 +210,36 @@ def section_2_config(
     }
 
 @pytest.fixture
+def questionnaire_config(
+    section_1_config,
+    section_2_config,
+):
+    return {
+        "sections": [section_1_config, section_2_config],
+    }
+
+@pytest.fixture
 def add_section_1(questionnaire: Questionnaire, section_1):
     questionnaire.add_section(
         **section_1,
     )
 
 @pytest.fixture
-def add_question_1_1(questionnaire: Questionnaire, question_1_1):
+def add_question_1_1(questionnaire: Questionnaire, question_1_1_kwargs):
     questionnaire.add_question(
-        **question_1_1,
+        **question_1_1_kwargs,
     )
 
 @pytest.fixture
-def add_question_1_2(questionnaire: Questionnaire, question_1_2):
+def add_question_1_2(questionnaire: Questionnaire, question_1_2_kwargs):
     questionnaire.add_question(
-        **question_1_2,
+        **question_1_2_kwargs,
     )
 
 @pytest.fixture
-def add_question_1_3(questionnaire: Questionnaire, question_1_3):
+def add_question_1_3(questionnaire: Questionnaire, question_1_3_kwargs):
     questionnaire.add_question(
-        **question_1_3,
+        **question_1_3_kwargs,
     )
 
 @pytest.fixture
@@ -250,21 +259,21 @@ def add_section_2(questionnaire: Questionnaire, section_2):
     )
 
 @pytest.fixture
-def add_question_2_1(questionnaire: Questionnaire, question_2_1):
+def add_question_2_1(questionnaire: Questionnaire, question_2_1_kwargs):
     questionnaire.add_question(
-        **question_2_1,
+        **question_2_1_kwargs,
     )
 
 @pytest.fixture
-def add_question_2_2(questionnaire: Questionnaire, question_2_2):
+def add_question_2_2(questionnaire: Questionnaire, question_2_2_kwargs):
     questionnaire.add_question(
-        **question_2_2,
+        **question_2_2_kwargs,
     )
 
 @pytest.fixture
-def add_question_2_3(questionnaire: Questionnaire, question_2_3):
+def add_question_2_3(questionnaire: Questionnaire, question_2_3_kwargs):
     questionnaire.add_question(
-        **question_2_3,
+        **question_2_3_kwargs,
     )
 
 @pytest.fixture

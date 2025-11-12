@@ -15,10 +15,10 @@ def test_questionnaire_added_section_details_are_correct(questionnaire: Question
     assert questionnaire.sections[0].section_name == section_1["section_name"]
     assert questionnaire.sections[0].section_description == section_1["section_description"]
 
-def test_cannot_add_question_without_section(questionnaire: Questionnaire, question_1_1):
+def test_cannot_add_question_without_section(questionnaire: Questionnaire, question_1_1_kwargs):
     try:
         questionnaire.add_question(
-            **question_1_1,
+            **question_1_1_kwargs,
         )
         pytest.fail("Expected subclass of ValueError, but no exception was raised")
     except Exception as e:
@@ -91,14 +91,14 @@ def test_set_answer_with_options_is_case_insensitive(questionnaire: Questionnair
     assert question.value == "Yes"
 
 
-def test_questionnaire_added_question_details_are_correct(questionnaire: Questionnaire, add_section_1, add_question_1_1, question_1_1):
-    section = next(section for section in questionnaire.sections if section.section_id == question_1_1["section_id"])
+def test_questionnaire_added_question_details_are_correct(questionnaire: Questionnaire, add_section_1, add_question_1_1, question_1_1_kwargs):
+    section = next(section for section in questionnaire.sections if section.section_id == question_1_1_kwargs["section_id"])
     assert len(section.questions) == 1
-    assert section.questions[0].question_id == question_1_1["question_id"]
-    assert section.questions[0].question_text == question_1_1["question_text"]
-    assert section.questions[0].question_type == question_1_1["question_type"]
-    assert section.questions[0].question_options == question_1_1["question_options"]
-    assert section.questions[0].skippable == question_1_1["skippable"]
+    assert section.questions[0].question_id == question_1_1_kwargs["question_id"]
+    assert section.questions[0].question_text == question_1_1_kwargs["question_text"]
+    assert section.questions[0].question_type == question_1_1_kwargs["question_type"]
+    assert section.questions[0].question_options == question_1_1_kwargs["question_options"]
+    assert section.questions[0].skippable == question_1_1_kwargs["skippable"]
 
 def test_can_add_multiple_questions_to_section(questionnaire: Questionnaire, add_section_1, add_question_1_1, add_question_1_2):
     pass
@@ -174,6 +174,23 @@ def test_spelling_sensitive_requires_list_of_chars(questionnaire: Questionnaire,
     except Exception as e:
         assert issubclass(type(e), Exception)
 
+def test_build_questionnaire_from_config(questionnaire_config):
+    questionnaire = Questionnaire.from_config(questionnaire_config)
+    assert len(questionnaire.sections) == len(questionnaire_config["sections"])
+    section = [section for section in questionnaire.sections]
+    for section, section_config in zip(questionnaire.sections, questionnaire_config["sections"]):
+        assert section.section_id == section_config["section_id"]
+        assert section.section_name == section_config["section_name"]
+        assert section.section_description == section_config["section_description"]
+        assert len(section.questions) == len(section_config["questions"])
+        question = [question for question in section.questions]
+        for question, question_config in zip(section.questions, section_config["questions"]):
+            assert question.question_id == question_config["question_id"]
+            assert question.question_text == question_config["question_text"]
+            assert question.question_type == question_config["question_type"]
+            assert question.question_options == question_config.get("question_options", None)
+            assert question.skippable == question_config.get("skippable", True)
+            assert question.spelling_sensitive == question_config.get("spelling_sensitive", False)
 
 
 
