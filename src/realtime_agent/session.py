@@ -204,6 +204,8 @@ class Session:
         user_websocket: Optional[WebSocketPort] = None,
         init_state: Optional[Mapping[str, Any]] = None,
         config: Optional[Mapping[str, Any]] = None,
+        llm_config: Optional[Mapping[str, Any]] = None,
+        agent_scaffolding_config: Optional[Mapping[str, Any]] = None,
         receive_timeout: float = 5.0,
     ) -> None:
         self.id = session_id or uuid.uuid4().hex
@@ -215,7 +217,17 @@ class Session:
         self._waiters: Dict[str, List[_Waiter]] = defaultdict(list)
         self._closed = False
 
+        # Build config from provided parameters or use explicit config
         self.config: Dict[str, Any] = dict(config or {})
+        if llm_config is not None:
+            self.config["llm"] = dict(llm_config)
+        if agent_scaffolding_config is not None:
+            agent_config = dict(agent_scaffolding_config)
+            # Merge scaffolding_kwargs into agent config if present
+            scaffolding_kwargs = agent_config.pop("scaffolding_kwargs", {})
+            if isinstance(scaffolding_kwargs, Mapping):
+                agent_config.update(dict(scaffolding_kwargs))
+            self.config["agent"] = agent_config
         self._user_websocket = user_websocket
         self._openai_client: Optional[WebSocketClient] = None
         self._receive_timeout = float(receive_timeout)
